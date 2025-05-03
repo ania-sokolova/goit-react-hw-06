@@ -1,27 +1,27 @@
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { nanoid } from "nanoid";
-import { useDispatch } from 'react-redux';
-import { addContact } from '../redux/contactsSlice';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from '../redux/contactsOps';
+import { selectContacts } from '../redux/contactsSlice';
 import styles from './ContactForm.module.css';
 
 const ContactForm = () => {
-  const dispatch = useDispatch();
+  const dispatch  = useDispatch();
+  const contacts  = useSelector(selectContacts);
 
-  const initialValues = { name: "", number: "" };
-
-  const validationSchema = Yup.object({
-    name: Yup.string()
-      .min(3, "Minimum 3 characters")
-      .max(50, "Maximum 50 characters")
-      .required("Name is required"),
-    number: Yup.string()
-      .matches(/^\d{3}-\d{2}-\d{2}$/, "Phone format must be 123-45-67")
-      .required("Number is required"),
+  const initialValues = { name: '', number: '' };
+  const schema = Yup.object({
+    name: Yup.string().required('Required'),
+    number: Yup.string().required('Required'),
   });
 
   const handleSubmit = (values, { resetForm }) => {
-    dispatch(addContact({ id: nanoid(), ...values }));
+    
+    if (contacts.find(c => c.name === values.name)) {
+      alert(`${values.name} is already in contacts`);
+      return;
+    }
+    dispatch(addContact(values));
     resetForm();
   };
 
@@ -29,23 +29,21 @@ const ContactForm = () => {
     <div className={styles.formContainer}>
       <Formik
         initialValues={initialValues}
-        validationSchema={validationSchema}
+        validationSchema={schema}
         onSubmit={handleSubmit}
       >
-        <Form className={styles.form}>
-          <div className={styles.fieldWrapper}>
-            <label htmlFor="name">Name:</label>
-            <Field id="name" name="name" type="text" />
-            <ErrorMessage name="name" component="div" className={styles.error} />
-          </div>
-
-          <div className={styles.fieldWrapper}>
-            <label htmlFor="number">Number:</label>
-            <Field id="number" name="number" type="text" placeholder="123-45-67" />
-            <ErrorMessage name="number" component="div" className={styles.error} />
-          </div>
-
-          <button type="submit" className={styles.submitButton}>Add contact</button>
+        <Form>
+          <label>
+            Name
+            <Field name="name" />
+            <ErrorMessage name="name" component="div" className={styles.error}/>
+          </label>
+          <label>
+            Number
+            <Field name="number" />
+            <ErrorMessage name="number" component="div" className={styles.error}/>
+          </label>
+          <button type="submit">Add contact</button>
         </Form>
       </Formik>
     </div>
